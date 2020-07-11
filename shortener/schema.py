@@ -1,5 +1,6 @@
 import graphene
 from graphene_django import DjangoObjectType
+from django.db.models import Q
 
 from .models import URL
 
@@ -8,10 +9,16 @@ class URLType(DjangoObjectType):
         model = URL
 
 class Query(graphene.ObjectType):
-    urls = graphene.List(URLType)
+    urls = graphene.List(URLType, url=graphene.String())
 
-    def resolve_urls(self, info, **kwargs):
-        return URL.objects.all()
+    def resolve_urls(self, info, url=None, **kwargs):
+        queroset = URL.objects.all()
+
+        if url:
+            _filter = Q(full_url_icontains=url)
+            queroset = queroset.filter(_filter)
+
+        return queroset
 
 class CreateURL(graphene.Mutation):
     url = graphene.Field(URLType)
